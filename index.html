@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>注音學習樂園</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="rpg.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>🌟 注音學習樂園 🌟</h1>
+  <p class="subtitle">認識常用國字的注音符號</p>
+</header>
+
+<nav class="mode-tabs hidden" id="modeTabs">
+  <button class="mode-tab active" data-mode="learn">📖 學習</button>
+  <button class="mode-tab" data-mode="quiz">✏️ 測驗</button>
+  <button class="mode-tab" data-mode="rpg">🗺️ 冒險</button>
+</nav>
+
+<main id="app">
+  <section class="status-bar">
+    <div id="loading" class="loading">資料載入中，請稍候...🐣</div>
+    <div id="error" class="error hidden"></div>
+  </section>
+
+  <div id="learnView">
+  <section id="todayBar" class="today-bar hidden"></section>
+  <section id="groupNav" class="group-nav hidden"></section>
+
+  <section id="progressBar" class="progress-wrap hidden">
+    <div class="progress-track">
+      <div id="progressFill" class="progress-fill"></div>
+    </div>
+    <span id="progressText" class="progress-text"></span>
+  </section>
+
+  <section id="cardGrid" class="card-grid"></section>
+  </div>
+
+  <div id="quizView" class="hidden">
+    <div id="taskSlot" class="task-slot"></div>
+    <section id="quizSetup" class="quiz-panel">
+      <h2>自由練習：要考哪些字？</h2>
+      <div class="choice-row" id="rangeChoices">
+        <button class="choice-btn active" data-range="group">選一組</button>
+        <button class="choice-btn" data-range="learned">學會的字</button>
+        <button class="choice-btn" data-range="all">全部的字</button>
+        <button class="choice-btn" data-range="weak">📕 我的錯字</button>
+      </div>
+      <div class="choice-row group-pick hidden" id="quizGroupPick"></div>
+      <h2>考什麼？</h2>
+      <div class="choice-row" id="typeChoices">
+        <button class="choice-btn active" data-type="char2bpmf">看字選注音</button>
+        <button class="choice-btn" data-type="bpmf2char">看注音選字</button>
+        <button class="choice-btn" data-type="listen">聽聲音選字</button>
+      </div>
+      <p id="setupHint" class="setup-hint"></p>
+      <button id="startQuiz" class="big-btn">開始測驗 🚀</button>
+    </section>
+
+    <section id="quizPlay" class="quiz-panel hidden">
+      <div class="quiz-top">
+        <span id="quizCounter"></span>
+        <span id="quizScore"></span>
+      </div>
+      <div class="quiz-track"><div id="quizTrackFill" class="quiz-track-fill"></div></div>
+      <div id="quizPrompt" class="quiz-prompt"></div>
+      <div id="quizOptions" class="quiz-options"></div>
+      <div id="quizFeedback" class="quiz-feedback"></div>
+      <button id="nextQuestion" class="big-btn hidden">下一題 ➡️</button>
+    </section>
+
+    <section id="quizResult" class="quiz-panel hidden">
+      <div id="resultStars" class="result-stars"></div>
+      <div id="resultText" class="result-text"></div>
+      <div id="resultExtra"></div>
+      <div id="resultWrongWrap" class="hidden">
+        <h3>再練習一下這些字：</h3>
+        <div id="resultWrong" class="wrong-list"></div>
+      </div>
+      <div class="result-actions">
+        <button id="retryQuiz" class="big-btn">再玩一次 🔁</button>
+        <button id="backToSetup" class="big-btn secondary">換個題目</button>
+      </div>
+    </section>
+
+  </div>
+
+  <div id="rpgView" class="hidden">
+    <div id="rpgRoot"></div>
+  </div>
+</main>
+
+<div id="dexOverlay" class="overlay hidden">
+  <div class="detail-card dex-card">
+    <button id="closeDex" class="close-btn" aria-label="關閉">✕</button>
+    <h2 class="dex-title">📒 朋友圖鑑</h2>
+    <div id="dexBody"></div>
+  </div>
+</div>
+
+<div id="detailOverlay" class="overlay hidden">
+  <div class="detail-card">
+    <button id="closeDetail" class="close-btn" aria-label="關閉">✕</button>
+    <div class="detail-char" id="detailChar"></div>
+    <div class="detail-bopomofo" id="detailBopomofo"></div>
+    <div class="detail-pinyin" id="detailPinyin"></div>
+    <div class="today-note hidden" id="detailTodayNote"></div>
+    <button id="speakBtn" class="speak-btn">🔊 唸唸看</button>
+    <div class="detail-examples">
+      <h3>常見詞語</h3>
+      <div id="detailExamples" class="example-list"></div>
+    </div>
+    <button id="learnedToggle" class="learned-toggle">我學會了 ⭐</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script src="quiz.js"></script>
+<script src="rpg.js"></script>
+<script src="task.js"></script>
+<script src="weak.js"></script>
+<script src="mystery.js"></script>
+<script src="music.js"></script>
+</body>
+</html>

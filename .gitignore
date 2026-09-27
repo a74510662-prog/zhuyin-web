@@ -1,0 +1,6 @@
+tools/
+*.py
+sounds/great_hsiaochen.mp3
+sounds/great_hsiaoyu.mp3
+sounds/great_yunjhe.mp3
+__pycache__/
