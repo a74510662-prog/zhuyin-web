@@ -12,6 +12,9 @@ const LEVELS = [
 ];
 
 // API 主要讀音有誤的字，改成台灣課本讀音（API 有備用讀音但放錯順序）
+// 不適合小朋友的例詞，不顯示
+const BLOCKED_WORDS = new Set(['他媽的', '安非他命']);
+
 const READING_FIX = {
   '姊': { bopomofo: 'ㄐㄧㄝˇ', pinyin: 'jiě' },
   '長': { bopomofo: 'ㄔㄤˊ', pinyin: 'cháng' }, // API 主要給 ㄓㄤˇ；單獨認字時 ㄔㄤˊ（長短）較基本
@@ -406,7 +409,7 @@ async function fetchExampleWords(char) {
     const res = await fetch(`${API_BASE}/characters/${encodeURIComponent(char)}`);
     if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
-    const examples = Array.isArray(data.example_words) ? data.example_words.slice(0, 8) : [];
+    const examples = Array.isArray(data.example_words) ? data.example_words.slice(0, 8).filter((w) => !BLOCKED_WORDS.has(w)) : [];
     state.detailCache.set(char, examples);
     return examples;
   } catch (err) {
