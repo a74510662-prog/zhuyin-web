@@ -1,5 +1,5 @@
 // 每次上傳新版要把版本號 +1，網頁的「🔄 更新」才抓得到新版
-const CACHE = "zhuyin-v2";
+const CACHE = "zhuyin-v3";
 const ASSETS = [
   "./",
   "./index.html",

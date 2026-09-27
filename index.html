@@ -16,6 +16,7 @@
 </head>
 <body>
 <header class="app-header">
+  <button id="resetBtn" class="reset-btn" title="清除所有學習進度（要密碼）">🗑️ 重置</button>
   <button id="updateBtn" class="update-btn" title="網站有新版本時按這裡更新">🔄 更新</button>
   <h1>🌟 注音學習樂園 🌟</h1>
   <p class="subtitle">認識常用國字的注音符號</p>
@@ -109,6 +110,17 @@
   </div>
 </div>
 
+<div id="resetOverlay" class="overlay hidden">
+  <div class="detail-card reset-card">
+    <button id="closeReset" class="close-btn" aria-label="關閉">✕</button>
+    <h2 class="reset-title">🗑️ 重置進度</h2>
+    <p class="reset-text">會清除學會的字、經驗等級、朋友圖鑑、每日任務、集點卡和錯字本，<b>不能復原</b>。</p>
+    <input id="resetPassword" class="reset-input" type="password" inputmode="numeric" autocomplete="off" placeholder="請輸入密碼">
+    <p id="resetError" class="reset-error"></p>
+    <button id="resetConfirm" class="big-btn">確定重置</button>
+  </div>
+</div>
+
 <div id="detailOverlay" class="overlay hidden">
   <div class="detail-card">
     <button id="closeDetail" class="close-btn" aria-label="關閉">✕</button>
@@ -147,6 +159,34 @@
       window.location.reload();
     });
   }
+  // 重置進度（家長用，要密碼）：只清學習進度，背景音樂開關、字庫快取保留
+  const RESET_PASSWORD = '1081209';
+  const resetOverlay = document.getElementById('resetOverlay');
+  const resetPassword = document.getElementById('resetPassword');
+  const resetError = document.getElementById('resetError');
+  const closeReset = () => resetOverlay.classList.add('hidden');
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    resetPassword.value = '';
+    resetError.textContent = '';
+    resetOverlay.classList.remove('hidden');
+    resetPassword.focus();
+  });
+  document.getElementById('closeReset').addEventListener('click', closeReset);
+  resetOverlay.addEventListener('click', (e) => { if (e.target === resetOverlay) closeReset(); });
+  function doReset() {
+    if (resetPassword.value !== RESET_PASSWORD) {
+      resetError.textContent = '密碼不對喔';
+      resetPassword.select();
+      return;
+    }
+    if (!confirm('確定要清除所有學習進度嗎？清除後不能復原。')) return;
+    localStorage.removeItem(LEARNED_KEY); // app.js
+    localStorage.removeItem(RPG_KEY); // rpg.js
+    window.location.reload();
+  }
+  document.getElementById('resetConfirm').addEventListener('click', doReset);
+  resetPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') doReset(); });
+
   document.getElementById('updateBtn').addEventListener('click', () => {
     const btn = document.getElementById('updateBtn');
     if (!swRegistration) { alert('目前無法檢查更新，請稍後再試'); return; }

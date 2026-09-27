@@ -624,3 +624,38 @@ body {
 }
 
 .update-btn:disabled { opacity: 0.7; cursor: default; }
+
+/* 左上角「🗑️ 重置」：家長用，要密碼 */
+.reset-btn {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+}
+
+.reset-card { max-width: 360px; }
+.reset-title { margin: 4px 0 8px; color: var(--purple); }
+.reset-text { margin: 0 0 14px; color: #666; line-height: 1.6; }
+
+.reset-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 2px solid #ddd;
+  border-radius: 14px;
+  font-family: inherit;
+  font-size: 1.2rem;
+  text-align: center;
+  letter-spacing: 4px;
+}
+
+.reset-input:focus { outline: none; border-color: var(--purple); }
+.reset-error { min-height: 1.4em; margin: 6px 0; color: #e0445e; font-weight: 700; }
