@@ -1,0 +1,20 @@
+{
+  "name": "注音學習樂園",
+  "short_name": "注音樂園",
+  "description": "認識常用國字的注音符號，還有拯救注音小怪獸的冒險",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff9f0",
+  "theme_color": "#ff6f91",
+  "orientation": "portrait",
+  "lang": "zh-Hant",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

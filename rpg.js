@@ -9,7 +9,7 @@ const EXTRA_EXP_RATE = 1 / 3; // 今日任務做完後繼續打怪
 const BOSS_FIRST_CLEAR_EXP = 50;
 const BADGE_EXP = 300;
 const STUDY_EXP = 2; // 學習頁：打開字卡
-const STUDY_DAILY_LIMIT = 10;
+const STUDY_DAILY_LIMIT = 10; // 今天的字（每日任務出題用）；之後打開的算自主學習，經驗不限
 const LEARNED_EXP = 5; // 第一次按「我學會了」
 const Q_TYPES = ['char2bpmf', 'bpmf2char', 'listen'];
 
@@ -65,7 +65,7 @@ const SYMBOL_COLOR = Object.fromEntries(ISLANDS.flatMap((is) => is.castles.map((
 function defaultRpg() {
   return { exp: 0, stars: {}, friends: [], team: [], badges: [],
     task: { date: '' }, stamps: {}, titles: [], weak: {},
-    study: { date: '', chars: [] }, learnedRewarded: [] };
+    study: { date: '', chars: [], extra: [] }, learnedRewarded: [], seen: null, groupDay: null };
 }
 
 function loadRpg() {
@@ -85,6 +85,11 @@ function saveRpg() {
 }
 
 let rpg = loadRpg();
+// seen＝打開過的字（決定單字組照順序開啟）；舊存檔用學會的字、今天學的字補上
+if (!Array.isArray(rpg.seen)) {
+  rpg.seen = [...new Set([...state.learned, ...rpg.learnedRewarded, ...(rpg.study.chars || [])])];
+  saveRpg();
+}
 
 // ---------- level / perks ----------
 
@@ -129,11 +134,28 @@ function gainStudyExp(exp, message) {
 
 function rewardStudy(char) {
   const today = todayStr();
-  if (rpg.study.date !== today) rpg.study = { date: today, chars: [], bonus: [] };
-  if (rpg.study.chars.includes(char) || rpg.study.chars.length >= STUDY_DAILY_LIMIT) return;
-  rpg.study.chars.push(char);
-  const n = rpg.study.chars.length;
-  gainStudyExp(STUDY_EXP, `📖 今日學習 ${n}/${STUDY_DAILY_LIMIT}${n === STUDY_DAILY_LIMIT ? ' ✅' : ''}${mysteryOnStudy(n)}`);
+  if (rpg.study.date !== today) rpg.study = { date: today, chars: [], extra: [], bonus: [] };
+  if (!rpg.study.extra) rpg.study.extra = [];
+  const unlockedBefore = unlockedUntil(); // app.js
+  if (!rpg.seen.includes(char)) rpg.seen.push(char);
+  const unlocked = unlockedUntil() > unlockedBefore ? `🔓 ${groupLabel(unlockedUntil())} 開放了！` : '';
+  if (rpg.study.chars.includes(char) || rpg.study.extra.includes(char)) {
+    saveRpg();
+    if (unlocked) showToast(unlocked);
+    return;
+  }
+  // 前 10 個＝今天的字；之後＝自主學習，一樣 +2 經驗、不設上限
+  let message;
+  if (rpg.study.chars.length < STUDY_DAILY_LIMIT) {
+    rpg.study.chars.push(char);
+    const n = rpg.study.chars.length;
+    message = `📖 今日學習 ${n}/${STUDY_DAILY_LIMIT}${n === STUDY_DAILY_LIMIT ? ' ✅' : ''}${mysteryOnStudy(n)}`;
+  } else {
+    rpg.study.extra.push(char);
+    const m = rpg.study.extra.length;
+    message = `🚀 自主學習第 ${m} 個字${mysteryOnStudy(STUDY_DAILY_LIMIT + m)}`;
+  }
+  gainStudyExp(STUDY_EXP, message + (unlocked ? `<br>${unlocked}` : ''));
 }
 
 function rewardLearned(char) {

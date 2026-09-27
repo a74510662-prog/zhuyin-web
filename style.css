@@ -19,6 +19,7 @@ body {
 }
 
 .app-header {
+  position: relative;
   text-align: center;
   padding: 24px 16px 32px;
   background: linear-gradient(135deg, var(--pink), var(--purple));
@@ -605,3 +606,21 @@ body {
   .bpmf-options .option-btn { font-size: 1.6rem; }
   .prompt-char { font-size: 5rem; }
 }
+
+/* 右上角「🔄 更新」：網站有新版時強制更新 */
+.update-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+}
+
+.update-btn:disabled { opacity: 0.7; cursor: default; }

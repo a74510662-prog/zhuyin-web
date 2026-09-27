@@ -1126,3 +1126,25 @@
   font-size: 0.85rem;
   font-weight: 900;
 }
+
+/* ---------- 自主學習、單字組照順序開 ---------- */
+
+.self-study { margin-top: 8px; font-weight: 700; color: #d9822b; }
+.self-study small { color: #999; font-weight: 500; }
+
+.group-btn.locked { background: #eee; color: #aaa; box-shadow: none; }
+.group-btn.locked.active { background: #bbb; color: #fff; }
+
+.group-lock-note {
+  grid-column: 1 / -1;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #f4f0fa;
+  color: var(--purple);
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.char-card.locked { opacity: 0.35; filter: grayscale(1); cursor: not-allowed; }
+.char-card.locked:hover { transform: none; }

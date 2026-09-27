@@ -120,7 +120,7 @@ function onDataReady() {
   el.progressWrap.classList.remove('hidden');
   el.todayBar.classList.remove('hidden');
   document.getElementById('modeTabs').classList.remove('hidden');
-  selectGroup(0);
+  selectGroup(unlockedUntil());
 }
 
 function chunk(arr, size) {
@@ -130,6 +130,38 @@ function chunk(arr, size) {
 }
 
 const firstGroupOfLevel = (level) => state.groupLevel.indexOf(level);
+
+// ---------- 單字組照順序開啟 ----------
+// 前一組每個字都打開看過，才開下一組；一天最多開始學 2 組新的（rpg.seen / rpg.groupDay 存在 rpg.js）
+const GROUPS_PER_DAY = 2;
+
+// 第一個還有字沒打開過的組（＝現在該學的組）
+function groupFrontier() {
+  const seen = new Set(rpg.seen);
+  const idx = state.groups.findIndex((g) => g.some((c) => !seen.has(c.char)));
+  return idx < 0 ? state.groups.length : idx;
+}
+
+// 今天最多可以開到第幾組（含）
+function unlockedUntil() {
+  const today = todayStr();
+  const frontier = groupFrontier();
+  if (!rpg.groupDay || rpg.groupDay.date !== today) {
+    rpg.groupDay = { date: today, base: frontier };
+    saveRpg();
+  }
+  return Math.min(frontier, rpg.groupDay.base + GROUPS_PER_DAY - 1, state.groups.length - 1);
+}
+
+const isGroupLocked = (idx) => idx > unlockedUntil();
+
+function lockMessage() {
+  const frontier = groupFrontier();
+  if (frontier > rpg.groupDay.base + GROUPS_PER_DAY - 1) {
+    return `今天已經學了 ${GROUPS_PER_DAY} 組新的字，好棒！明天再來開下一組 🌙<br>（學過的組可以隨時複習）`;
+  }
+  return `要照順序學喔！先把「${groupLabel(frontier)}」的字都打開看過，才會開放這一組`;
+}
 
 // 「入門一 第 3 組」這種名稱；組號在每一級裡從 1 開始
 function groupLabel(idx, withLevel = true) {
@@ -157,9 +189,10 @@ function renderGroupNav() {
   state.groups.forEach((group, idx) => {
     if (state.groupLevel[idx] !== level) return;
     const btn = document.createElement('button');
-    btn.className = 'group-btn' + (idx === state.activeGroup ? ' active' : '');
+    const locked = isGroupLocked(idx);
+    btn.className = 'group-btn' + (idx === state.activeGroup ? ' active' : '') + (locked ? ' locked' : '');
     const learnedCount = group.filter((c) => state.learned.has(c.char)).length;
-    btn.innerHTML = `${groupLabel(idx, false)} <span class="badge">${learnedCount}/${group.length}</span>`;
+    btn.innerHTML = `${locked ? '🔒 ' : ''}${groupLabel(idx, false)} <span class="badge">${learnedCount}/${group.length}</span>`;
     btn.addEventListener('click', () => selectGroup(idx));
     el.groupNav.appendChild(btn);
   });
@@ -178,26 +211,27 @@ const CIRCLED = '①②③④⑤⑥⑦⑧⑨⑩';
 function renderCardGrid() {
   const group = state.groups[state.activeGroup] || [];
   const today = studyToday().chars; // mystery.js
-  el.cardGrid.innerHTML = '';
+  const locked = isGroupLocked(state.activeGroup);
+  el.cardGrid.innerHTML = locked ? `<div class="group-lock-note">🔒 ${lockMessage()}</div>` : '';
   group.forEach((item) => {
     const card = document.createElement('div');
     const isLearned = state.learned.has(item.char);
     const todayIdx = today.indexOf(item.char);
-    card.className = 'char-card' + (isLearned ? ' learned' : '') + (todayIdx >= 0 ? ' today' : '');
+    card.className = 'char-card' + (isLearned ? ' learned' : '') + (todayIdx >= 0 ? ' today' : '') + (locked ? ' locked' : '');
     card.innerHTML = `
       ${todayIdx >= 0 ? `<span class="today-badge">今日 ${CIRCLED[todayIdx]}</span>` : ''}
       ${isLearned ? '<span class="star">⭐</span>' : ''}
       <div class="big-char">${item.char}</div>
-      <div class="bopomofo-hint">${item.bopomofo || ''}</div>
+      <div class="bopomofo-hint">${locked ? '' : item.bopomofo || ''}</div>
     `;
-    card.addEventListener('click', () => openDetail(item));
+    if (!locked) card.addEventListener('click', () => openDetail(item));
     el.cardGrid.appendChild(card);
   });
 }
 
 // 學習頁上方「今天的字 x/10」；學滿後提示去測驗頁做每日任務
 function renderTodayBar() {
-  const chars = studyToday().chars;
+  const { chars, extra } = studyToday();
   const n = chars.length;
   const full = n >= STUDY_DAILY_LIMIT; // rpg.js
   el.todayBar.classList.toggle('full', full);
@@ -208,7 +242,8 @@ function renderTodayBar() {
         : `<span>📖 今天的字 <b>${n}</b>/${STUDY_DAILY_LIMIT}</span><span class="today-tip">打開字卡就算學一個字</span>`}
     </div>
     ${full ? '' : `<div class="today-track"><div class="today-fill" style="width:${(n / STUDY_DAILY_LIMIT) * 100}%"></div></div>`}
-    ${n ? `<div class="today-chars">${chars.map((c, i) => `<span>${CIRCLED[i]}${c}</span>`).join('')}</div>` : ''}`;
+    ${n ? `<div class="today-chars">${chars.map((c, i) => `<span>${CIRCLED[i]}${c}</span>`).join('')}</div>` : ''}
+    ${full ? `<div class="self-study">🚀 自主學習 <b>${extra.length}</b> 字　<small>再打開新的字卡，每個 +${STUDY_EXP} 經驗，每 5 個字有寶箱</small></div>` : ''}`;
   const go = document.getElementById('todayGoQuiz');
   if (go) go.addEventListener('click', () => switchMode('quiz'));
 }
@@ -235,6 +270,7 @@ async function openDetail(item) {
   el.detailExamples.innerHTML = '<span>載入中...</span>';
   rewardStudy(item.char); // 打開字卡＝學了這個字（每日學習經驗、神秘小關卡，rpg.js）
   showTodayNote(item.char);
+  renderGroupNav();
   renderCardGrid();
   renderTodayBar();
 
@@ -253,7 +289,7 @@ function showTodayNote(char) {
   const idx = today.indexOf(char);
   let note = '';
   if (idx >= 0) note = `📖 今天的第 ${idx + 1} 個字`;
-  else if (today.length >= STUDY_DAILY_LIMIT) note = `今天的 ${STUDY_DAILY_LIMIT} 個字已經學滿，這個字不算任務喔（可以複習）`;
+  else if (studyToday().extra.includes(char)) note = '🚀 自主學習的字（不算每日任務）';
   el.detailTodayNote.textContent = note;
   el.detailTodayNote.classList.toggle('hidden', !note);
   el.detailTodayNote.classList.toggle('extra', idx < 0);

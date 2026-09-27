@@ -1,4 +1,5 @@
 // 學習頁的神秘小關卡：今天學到第 3、5、10 個字時出現，用今天學過的字玩連連看／填空。
+// 之後自主學習每多 5 個字（第 15、20、25…個）再出現一次，用那 5 個字玩。
 // Relies on globals: state, speak, fetchExampleWords, fetchWordBopomofo, zhuyinColumnHtml, fixSyllable (app.js);
 // shuffle, pickRandom, CHEERS (quiz.js); rpg, saveRpg, todayStr, gainStudyExp (rpg.js).
 const MYSTERY_LEVELS = {
@@ -6,6 +7,17 @@ const MYSTERY_LEVELS = {
   5: { name: '填空挑戰', icon: '✏️', exp: 8, stages: ['fill'] },
   10: { name: '神秘大寶箱', icon: '🎁', exp: 15, stages: ['match', 'fill'] },
 };
+const SELF_STUDY_EVERY = 5;
+const SELF_STUDY_EXP = 8;
+
+// 第 n 個字的神秘關卡設定；自主學習的連連看、填空輪流
+function mysteryCfg(n) {
+  if (MYSTERY_LEVELS[n]) return MYSTERY_LEVELS[n];
+  if (n <= STUDY_DAILY_LIMIT || n % SELF_STUDY_EVERY) return null;
+  const match = (n / SELF_STUDY_EVERY) % 2 === 1;
+  return { name: '自主學習寶箱', icon: '🚀', exp: SELF_STUDY_EXP, stages: [match ? 'match' : 'fill'], self: true };
+}
+
 const MATCH_MAX_PAIRS = 5;
 const MATCH_MAX_MISTAKES = 2;
 const FILL_QUESTIONS = 3;
@@ -34,12 +46,17 @@ document.getElementById('learnView').appendChild(mysteryFab);
 
 function studyToday() {
   const s = rpg.study;
-  return s.date === todayStr() ? { chars: s.chars, bonus: s.bonus || [] } : { chars: [], bonus: [] };
+  return s.date === todayStr()
+    ? { chars: s.chars, extra: s.extra || [], bonus: s.bonus || [] }
+    : { chars: [], extra: [], bonus: [] };
 }
 
 function pendingMysteries() {
-  const { chars, bonus } = studyToday();
-  return Object.keys(MYSTERY_LEVELS).map(Number).filter((n) => chars.length >= n && !bonus.includes(n));
+  const { chars, extra, bonus } = studyToday();
+  const total = chars.length + extra.length;
+  const levels = [];
+  for (let n = 1; n <= total; n++) if (mysteryCfg(n) && !bonus.includes(n)) levels.push(n);
+  return levels;
 }
 
 // 備用入口：玩到一半重新整理頁面時，還能回來完成；神秘關卡視窗開著時不顯示
@@ -57,7 +74,7 @@ let mysteryWaiting = 0; // 已達成、等著跳出的關卡
 // rewardStudy（rpg.js）每學一個新字就呼叫。學到第 3、5、10 個字時，
 // 以先發生的為準跳出神秘小關卡：① 3 秒後 ② 小朋友關掉字卡（onDetailClosed）
 function mysteryOnStudy(count) {
-  if (!MYSTERY_LEVELS[count]) {
+  if (!mysteryCfg(count)) {
     updateMysteryFab();
     return '';
   }
@@ -88,15 +105,18 @@ function charObjects(list) {
 // 直接進入遊戲，沒有開場畫面，也不能關掉，要當場完成
 function openMystery(level) {
   mystery.level = level;
-  mystery.chars = charObjects(studyToday().chars.slice(0, level));
+  const { chars, extra } = studyToday();
+  const all = [...chars, ...extra];
+  // 今天的字：前 level 個；自主學習：這一批的 5 個
+  mystery.chars = charObjects(mysteryCfg(level).self ? all.slice(level - SELF_STUDY_EVERY, level) : all.slice(0, level));
   mysteryOverlay.classList.remove('hidden');
   updateMysteryFab();
   startMystery();
 }
 
 function mysteryBanner() {
-  const cfg = MYSTERY_LEVELS[mystery.level];
-  return `<div class="mys-banner">🎁 神秘小關卡！過關 ⭐ +${cfg.exp} 經驗</div>`;
+  const cfg = mysteryCfg(mystery.level);
+  return `<div class="mys-banner">${cfg.icon} ${cfg.self ? '自主學習寶箱' : '神秘小關卡'}！過關 ⭐ +${cfg.exp} 經驗</div>`;
 }
 
 function closeMystery() {
@@ -111,7 +131,7 @@ function startMystery() {
 }
 
 function runStage() {
-  const stage = MYSTERY_LEVELS[mystery.level].stages[mystery.stageIdx];
+  const stage = mysteryCfg(mystery.level).stages[mystery.stageIdx];
   if (!stage) finishMystery();
   else if (stage === 'match') renderMatch();
   else renderFill();
@@ -303,7 +323,7 @@ function showFillQuestion(questions, idx) {
 // ---------- 結算 ----------
 
 function finishMystery() {
-  const cfg = MYSTERY_LEVELS[mystery.level];
+  const cfg = mysteryCfg(mystery.level);
   const results = [];
   let passed = true;
   if (cfg.stages.includes('match')) {

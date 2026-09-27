@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>注音學習樂園</title>
+<meta name="theme-color" content="#ff6f91">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
@@ -12,6 +16,7 @@
 </head>
 <body>
 <header class="app-header">
+  <button id="updateBtn" class="update-btn" title="網站有新版本時按這裡更新">🔄 更新</button>
   <h1>🌟 注音學習樂園 🌟</h1>
   <p class="subtitle">認識常用國字的注音符號</p>
 </header>
@@ -127,5 +132,40 @@
 <script src="weak.js"></script>
 <script src="mystery.js"></script>
 <script src="music.js"></script>
+<script>
+  let swRegistration = null;
+  let swReloading = false;
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' })
+        .then(reg => { swRegistration = reg; })
+        .catch(() => {});
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (swReloading) return;
+      swReloading = true;
+      window.location.reload();
+    });
+  }
+  document.getElementById('updateBtn').addEventListener('click', () => {
+    const btn = document.getElementById('updateBtn');
+    if (!swRegistration) { alert('目前無法檢查更新，請稍後再試'); return; }
+    btn.textContent = '⏳ 檢查中...';
+    btn.disabled = true;
+    let updated = false;
+    swRegistration.addEventListener('updatefound', () => { updated = true; });
+    swRegistration.update().then(() => {
+      setTimeout(() => {
+        btn.textContent = '🔄 更新';
+        btn.disabled = false;
+        if (!updated) alert('目前已經是最新版本！');
+      }, 2500);
+    }).catch(() => {
+      btn.textContent = '🔄 更新';
+      btn.disabled = false;
+      alert('檢查更新失敗，請確認網路連線');
+    });
+  });
+</script>
 </body>
 </html>
